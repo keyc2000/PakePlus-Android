@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#6366F1">
+<link rel="manifest" href="manifest.json">
+<title>课时计算器</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#6366F1;--primary-light:#818CF8;--primary-dark:#4F46E5;
+  --accent:#06B6D4;--success:#10B981;--warning:#F59E0B;--danger:#EF4444;
+  --bg:#F1F5F9;--card:#fff;--text:#1E293B;--text-sec:#64748B;
+  --border:#E2E8F0;--radius:12px;
+  --shadow:0 4px 24px rgba(0,0,0,.08);--shadow-lg:0 12px 48px rgba(0,0,0,.12);
+}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 50%,#f093fb 100%);background-attachment:fixed;min-height:100vh;padding:24px 16px;color:var(--text);-webkit-font-smoothing:antialiased}
+.calc-container{max-width:980px;margin:0 auto;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);border-radius:20px;box-shadow:var(--shadow-lg),0 0 0 1px rgba(255,255,255,.6);overflow:hidden;animation:slideUp .5s cubic-bezier(.16,1,.3,1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.header{background:linear-gradient(135deg,#6366F1 0%,#8B5CF6 50%,#A78BFA 100%);color:#fff;padding:24px 32px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);border-radius:50%}
+.header-icon{width:48px;height:48px;background:rgba(255,255,255,.2);backdrop-filter:blur(10px);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,.3);position:relative;z-index:1}
+.header-text h1{font-size:22px;font-weight:800;letter-spacing:-.5px;position:relative;z-index:1}
+.header-text span{font-size:13px;opacity:.85;font-weight:400;position:relative;z-index:1}
+.tab-btns{display:flex;background:#F8FAFC;border-bottom:2px solid var(--border);padding:0 8px}
+.tab-btn{flex:1;padding:14px 8px;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--text-sec);cursor:pointer;transition:all .3s cubic-bezier(.16,1,.3,1);position:relative;border-radius:10px 10px 0 0;margin:6px 2px 0}
+.tab-btn::after{content:'';position:absolute;bottom:-2px;left:50%;width:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:3px 3px 0 0;transition:all .3s cubic-bezier(.16,1,.3,1);transform:translateX(-50%)}
+.tab-btn:hover{background:rgba(99,102,241,.06);color:var(--primary)}
+.tab-btn.active{color:var(--primary);background:#fff;box-shadow:0 -4px 16px rgba(99,102,241,.08)}
+.tab-btn.active::after{width:60%}
+.tab-panel{display:none;padding:28px 32px;animation:fadeIn .35s ease}
+.tab-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.row{display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.row label{font-weight:600;color:var(--text-sec);white-space:nowrap;font-size:13px;min-width:70px}
+.row select,.row input[type="number"],.row input[type="text"]{padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:all .25s ease;background:#fff;color:var(--text);font-family:inherit}
+.row select:focus,.row input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(99,102,241,.1)}
+.row select:hover,.row input:hover{border-color:var(--primary-light)}
+.row select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748B' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+.row input[type="number"]{width:110px}
+.season-section{margin:14px 0}
+.season-section h4{font-size:14px;color:var(--text);margin-bottom:8px;font-weight:700}
+.season-cards{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.season-card{padding:10px 18px;border:2px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-sec);background:#F8FAFC;transition:all .25s ease;user-select:none;min-width:100px;text-align:center}
+.season-card:hover{border-color:var(--primary-light);transform:translateY(-1px)}
+.season-card.selected{border-color:var(--primary);background:rgba(99,102,241,.06);color:var(--primary-dark);font-weight:700}
+.season-card .s-detail{font-size:11px;color:#94A3B8;margin-top:3px}
+.season-card.selected .s-detail{color:var(--primary-light)}
+.pkg-cards{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.pkg-card{padding:12px 16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;background:#F8FAFC;transition:all .25s ease;min-width:130px;text-align:center}
+.pkg-card:hover{border-color:var(--primary-light);box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-2px)}
+.pkg-card.selected{border-color:var(--primary);background:rgba(99,102,241,.06);box-shadow:0 4px 16px rgba(99,102,241,.15)}
+.pkg-card .pkg-name{font-size:13px;font-weight:600;color:var(--text)}
+.pkg-card.selected .pkg-name{color:var(--primary-dark)}
+.pkg-card .pkg-price{font-size:18px;font-weight:800;color:var(--success);margin:4px 0}
+.pkg-card .pkg-detail{font-size:11px;color:#94A3B8}
+.pkg-card.selected .pkg-detail{color:var(--primary-light)}
+.special-pkg-section{margin:12px 0;padding:12px 14px;background:#FFFBEB;border:2px solid #FBBF24;border-radius:12px}
+.special-pkg-section h4{font-size:13px;color:#92400E;margin-bottom:8px;font-weight:700}
+.material-section{margin:10px 0;padding:14px 16px;background:#F0FDF4;border:2px solid #86EFAC;border-radius:12px}
+.material-section h4{font-size:13px;color:#166534;margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:6px}
+.material-section h4::before{content:'📎';font-size:14px}
+.material-item{display:flex;gap:8px;align-items:center;margin:6px 0;padding:8px 10px;background:#fff;border:2px solid #BBF7D0;border-radius:8px;flex-wrap:wrap}
+.material-item input[type="text"]{flex:1;min-width:120px;padding:6px 8px;border:2px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit}
+.material-item input[type="number"]{width:80px;padding:6px 8px;border:2px solid var(--border);border-radius:6px;font-size:13px;text-align:center;font-family:inherit}
+.btn-add-material{background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:all .25s ease;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(16,185,129,.3)}
+.btn-add-material:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(16,185,129,.4)}
+.gift-hours{display:flex;align-items:center;gap:10px;margin:12px 0;padding:10px 14px;background:#F0FDF4;border:2px solid #BBF7D0;border-radius:10px;font-size:13px;color:#166534}
+.gift-hours label{font-weight:700;white-space:nowrap}
+.gift-hours input{width:70px;padding:6px 8px;border:2px solid #86EFAC;border-radius:6px;font-size:13px;text-align:center;font-family:inherit;background:#fff}
+.discount-section{margin:14px 0}
+.discount-section h4{font-size:14px;color:var(--text);margin-bottom:8px;font-weight:700}
+.discount-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.discount-row select{padding:6px 8px;border:2px solid var(--border);border-radius:6px;font-size:13px;background:#fff;font-family:inherit;cursor:pointer}
+.discount-row input[type="number"]{width:90px;padding:6px 8px;border:2px solid var(--border);border-radius:6px;font-size:13px;text-align:center;font-family:inherit}
+.discount-row input[type="text"]{width:140px;padding:6px 8px;border:2px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit}
+.btn-del{background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;padding:0 6px;transition:color .2s}
+.btn-del:hover{color:#DC2626}
+.btn-add-disc{background:none;border:2px dashed var(--primary-light);color:var(--primary);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all .25s ease}
+.btn-add-disc:hover{background:rgba(99,102,241,.06);border-color:var(--primary-dark);color:var(--primary-dark)}
+.season-detail-row{display:flex;gap:10px;align-items:center;margin:8px 0;padding:10px 12px;background:#F8FAFC;border:2px solid var(--border);border-radius:10px;flex-wrap:wrap}
+.season-detail-row .season-name{font-weight:700;color:var(--primary-dark);min-width:50px;font-size:13px}
+.season-detail-row input[type="number"]{width:70px;padding:5px 6px;border:2px solid var(--border);border-radius:6px;font-size:12px;text-align:center;font-family:inherit}
+.season-detail-row select{padding:4px 6px;border:2px solid var(--border);border-radius:6px;font-size:12px;background:#fff;cursor:pointer}
+.global-disc-section{margin:10px 0;padding:12px 14px;background:#FFFBEB;border:2px solid #FBBF24;border-radius:10px}
+.global-disc-section h4{font-size:13px;color:#92400E;margin-bottom:6px;font-weight:700}
+.source-section{margin:14px 0;padding:12px 14px;background:#F8FAFC;border:2px solid var(--border);border-radius:10px}
+.source-section h4{font-size:14px;color:var(--text);margin-bottom:8px;font-weight:700}
+.source-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.source-row select,.source-row input{padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:#fff}
+.source-row input[type="text"]{width:180px}
+.process-toggle{margin:14px 0}
+.process-toggle summary{font-size:13px;font-weight:700;color:var(--success);cursor:pointer;padding:8px 0;user-select:none;transition:color .2s}
+.process-toggle summary:hover{color:#047857}
+.process-box{background:#F0FDF4;border:2px solid #BBF7D0;border-radius:10px;padding:12px 16px;margin-top:6px;font-size:12px;color:#166534;line-height:2}
+.process-box .step-line{padding:2px 0}
+.process-box .step-num{display:inline-block;background:var(--success);color:#fff;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;font-size:11px;margin-right:6px;font-weight:700}
+.process-box .highlight{font-weight:700;color:var(--danger)}
+.result-box{margin:16px 0;padding:20px 24px;background:linear-gradient(135deg,#F0F9FF 0%,#E0F2FE 100%);border:2px solid #BAE3FF;border-radius:16px;text-align:center;position:relative;overflow:hidden;animation:resPop .4s cubic-bezier(.16,1,.3,1)}
+@keyframes resPop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.result-box::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--primary),var(--accent));border-radius:4px 0 0 4px}
+.result-box .r-label{font-size:13px;color:#475569;margin-bottom:4px;font-weight:600}
+.result-box .r-price{font-size:30px;font-weight:800;color:var(--primary-dark)}
+.result-box .r-note{font-size:11px;color:var(--text-sec);margin-top:4px}
+.btn-copy{background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px;transition:all .25s ease;box-shadow:0 2px 8px rgba(16,185,129,.3);font-family:inherit}
+.btn-copy:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(16,185,129,.4)}
+.btn-clear{background:#F8FAFC;color:var(--text-sec);border:2px solid var(--border);padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;margin-left:8px;transition:all .25s ease;font-family:inherit}
+.btn-clear:hover{background:#F1F5F9;border-color:#CBD5E1;color:var(--text)}
+.detail-table{width:100%;border-collapse:separate;border-spacing:0;margin:12px 0;font-size:13px;border-radius:10px;overflow:hidden;border:2px solid var(--border)}
+.detail-table th{background:linear-gradient(135deg,#F8FAFC,#F1F5F9);color:var(--text-sec);font-weight:700;padding:10px 14px;text-align:left;border-bottom:2px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.detail-table td{padding:10px 14px;border-bottom:1px solid #F1F5F9;color:var(--text);font-weight:500}
+.detail-table tr:last-child{background:#F0FDF4;font-weight:700;color:var(--success)}
+.detail-table tr:last-child td{border-bottom:none}
+.detail-table tr:hover td{background:rgba(99,102,241,.02)}
+.combo-rows{margin:12px 0}
+.combo-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;padding:14px;border:2px solid var(--border);border-radius:12px;background:#F8FAFC;flex-wrap:wrap;transition:all .25s ease;animation:rowSlide .3s ease}
+@keyframes rowSlide{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.combo-row:hover{border-color:var(--primary-light);box-shadow:0 2px 12px rgba(99,102,241,.08)}
+.combo-row .combo-type{font-weight:700;color:var(--primary-dark);min-width:70px;padding-top:6px}
+.combo-row .combo-fields{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.combo-row .combo-fields select,.combo-row .combo-fields input{padding:6px 8px;border:2px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;background:#fff}
+.combo-row .combo-fields input[type="number"]{width:65px;text-align:center}
+.combo-row .combo-fields input[type="text"]{width:100px}
+.combo-row .btn-del-row{background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;padding:4px;transition:color .2s}
+.combo-row .btn-del-row:hover{color:#DC2626}
+.combo-row .combo-subtotal{color:var(--primary-dark);font-weight:800;font-size:15px;margin:0 8px;min-width:80px;text-align:right}
+.combo-add-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.btn-add-combo{background:linear-gradient(135deg,var(--primary),#8B5CF6);color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s ease;box-shadow:0 2px 8px rgba(99,102,241,.3);font-family:inherit}
+.btn-add-combo:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(99,102,241,.4)}
+.combo-final{margin-top:16px;font-size:22px;color:var(--primary-dark);font-weight:800;padding:16px 20px;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border-radius:14px;border:2px solid #BAE3FF;display:flex;justify-content:space-between;align-items:center}
+@media(max-width:640px){
+  body{padding:12px 8px}
+  .calc-container{border-radius:14px}
+  .header{padding:18px 20px}
+  .header-text h1{font-size:18px}
+  .tab-panel{padding:20px}
+  .row{gap:8px}
+  .row select,.row input{padding:8px 10px;font-size:13px}
+  .tab-btn{font-size:12px;padding:10px 4px}
+  .result-box .r-price{font-size:24px}
+  .combo-final{font-size:18px}
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#94A3B8}
+</style>
+</head>
+<body>
+<div class="calc-container">
+  <div class="header">
+    <div class="header-icon">📊</div>
+    <div class="header-text"><h1>课时计算器</h1><span>班课 · 一对一 · 一对二 · 一对三 · 组合报价</span></div>
+  </div>
+  <div class="tab-btns">
+    <button class="tab-btn active" onclick="switchTab(this,'banke')">📚 班课</button>
+    <button class="tab-btn" onclick="switchTab(this,'11')">👤 一对一</button>
+    <button class="tab-btn" onclick="switchTab(this,'12')">👥 一对二</button>
+    <button class="tab-btn" onclick="switchTab(this,'13')">👨‍👩‍👦 一对三</button>
+    <button class="tab-btn" onclick="switchTab(this,'combo')">📦 组合报价</button>
+  </div>
+
+  <!-- ===== 班课 ===== -->
+  <div id="panel-banke" class="tab-panel active">
+    <div class="row">
+      <label>年级：</label>
+      <select id="gradeSelectBanke" onchange="onBankeGradeChange()">
+        <option value="">-- 请选择 --</option>
+        <option value="yinianji">一年级</option>
+        <option value="ernienji">二年级</option>
+        <option value="x3-6">3-6年级</option>
+        <option value="chuyi">初一</option>
+        <option value="chuer">初二</option>
+        <option value="chusan">初三</option>
+        <option value="gaoyi">高一</option>
+        <option value="gaoer">高二</option>
+        <option value="gaosan">高三</option>
+      </select>
+      <span id="bankePriceHint" style="font-size:12px;color:var(--text-sec)"></span>
+    </div>
+    <div id="bankeSeasonArea"></div>
+    <div class="material-section">
+      <h4>资料费（不参与打折）</h4>
+      <div id="bankeMaterialList"></div>
+      <button class="btn-add-material" onclick="addBankeMaterialItem()">+ 添加资料费项目</button>
+    </div>
+    <div class="global-disc-section">
+      <h4 onclick="toggleBankeDisc()" style="cursor:pointer;user-select:none">
+        <span id="bankeDiscToggle" style="display:inline-block;transition:transform 0.2s">&#9654;</span>
+        额外优惠（在季节折扣基础上，额外减免）
+      </h4>
+      <div id="bankeDiscBody" style="display:none">
+        <div id="bankeGlobalDiscList"></div>
+        <button class="btn-add-disc" onclick="addBankeGlobalDisc()">+ 添加额外优惠</button>
+      </div>
+    </div>
+    <div class="source-section">
+      <h4>客户来源</h4>
+      <div class="source-row">
+        <select id="bankeSourceType">
+          <option value="">-- 来源 --</option>
+          <option value="转介绍">转介绍</option>
+          <option value="地推">地推</option>
+          <option value="电销">电销</option>
+          <option value="朋友圈">朋友圈</option>
+          <option value="业主群">业主群</option>
+          <option value="其他">其他</option>
+        </select>
+        <input type="text" id="bankeSourceDetail" placeholder="介绍人姓名/详情">
+      </div>
+    </div>
+    <details class="process-toggle"><summary>展开计算过程</summary><div class="process-box" id="bankeProcess"></div></details>
+    <table class="detail-table"><thead><tr><th>项目</th><th style="text-align:right">金额（元）</th></tr></thead><tbody id="bankeDetailBody"></tbody></table>
+    <div class="result-box">
+      <div class="r-label">最终报价</div>
+      <div class="r-price" id="bankeFinalPrice">0</div>
+      <div class="r-note" id="bankeFinalNote"></div>
+      <button class="btn-copy" onclick="copyBankeResult()">📋 复制报价结果</button>
+      <button class="btn-clear" onclick="resetBanke()">清空重算</button>
+    </div>
+  </div>
+
+  <!-- ===== 一对一 ===== -->
+  <div id="panel-11" class="tab-panel">
+    <div class="row">
+      <label>年级：</label>
+      <select id="gradeSelect11" onchange="on11GradeChange()">
+        <option value="">-- 请选择 --</option>
+        <option value="1-4">1-4年级</option><option value="5">5年级</option><option value="6">6年级</option>
+        <option value="7">初一</option><option value="8">初二</option><option value="9">初三</option>
+        <option value="10">高一</option><option value="11">高二</option><option value="12">高三</option>
+      </select>
+      <span id="hint11" style="font-size:12px;color:var(--text-sec)"></span>
+    </div>
+    <div class="row"><label>课时数：</label><input type="number" id="hours11" value="30" min="1" onchange="calc11()"><span style="font-size:12px;color:var(--text-sec)">课时（1课时=1小时）</span></div>
+    <div class="row"><label>课时单价：</label><input type="number" id="price11" value="130" min="0" onchange="calc11()"><span style="font-size:12px;color:var(--text-sec)">元/课时</span></div>
+    <div class="row"><label>服务费：</label><input type="number" id="serviceFee11" value="500" min="0" onchange="calc11()"><span style="font-size:12px;color:var(--text-sec)">元/期</span></div>
+    <div class="gift-hours"><label>赠送课时：</label><input type="number" id="gift11" value="0" min="0" onchange="calc11()"><span>课时（赠送的课时不计入收费，但计入总课时）</span></div>
+    <div class="discount-section"><h4>优惠设置</h4><div id="discList11"></div><button class="btn-add-disc" onclick="addDiscount11()">+ 添加优惠项</button></div>
+    <div class="source-section"><h4>客户来源</h4><div class="source-row">
+      <select id="sourceType11"><option value="">-- 来源 --</option><option value="转介绍">转介绍</option><option value="地推">地推</option><option value="电销">电销</option><option value="朋友圈">朋友圈</option><option value="业主群">业主群</option><option value="其他">其他</option></select>
+      <input type="text" id="sourceDetail11" placeholder="介绍人姓名/详情">
+    </div></div>
+    <details class="process-toggle"><summary>展开计算过程</summary><div class="process-box" id="process11"></div></details>
+    <table class="detail-table"><thead><tr><th>项目</th><th style="text-align:right">金额（元）</th></tr></thead><tbody id="detailBody11"></tbody></table>
+    <div class="result-box"><div class="r-label">最终报价</div><div class="r-price" id="finalPrice11">0</div><div class="r-note" id="finalNote11"></div>
+      <button class="btn-copy" onclick="copyResult11()">📋 复制报价结果</button><button class="btn-clear" onclick="reset11()">清空重算</button>
+    </div>
+  </div>
+
+  <!-- ===== 一对二 ===== -->
+  <div id="panel-12" class="tab-panel">
+    <div class="row">
+      <label>年级：</label>
+      <select id="gradeSelect12" onchange="on12GradeChange()">
+        <option value="">-- 请选择 --</option>
+        <option value="1-4">1-4年级</option><option value="5">5年级</option><option value="6">6年级</option>
+        <option value="7">初一</option><option value="8">初二</option><option value="9">初三</option>
+        <option value="10">高一</option><option value="11">高二</option><option value="12">高三</option>
+      </select>
+      <span id="hint12" style="font-size:12px;color:var(--text-sec)"></span>
+    </div>
+    <div class="row"><label>课时数：</label><input type="number" id="hours12" value="30" min="1" onchange="calc12()"><span style="font-size:12px;color:var(--text-sec)">课时（1课时=1小时）</span></div>
+    <div class="row"><label>课时单价：</label><input type="number" id="price12" value="120" min="0" onchange="calc12()"><span style="font-size:12px;color:var(--text-sec)">元/课时</span></div>
+    <div class="row"><label>服务费：</label><input type="number" id="serviceFee12" value="500" min="0" onchange="calc12()"><span style="font-size:12px;color:var(--text-sec)">元/期</span></div>
+    <div class="gift-hours"><label>赠送课时：</label><input type="number" id="gift12" value="0" min="0" onchange="calc12()"><span>课时（赠送的课时不计入收费，但计入总课时）</span></div>
+    <div class="discount-section"><h4>优惠设置</h4><div id="discList12"></div><button class="btn-add-disc" onclick="addDiscount12()">+ 添加优惠项</button></div>
+    <div class="source-section"><h4>客户来源</h4><div class="source-row">
+      <select id="sourceType12"><option value="">-- 来源 --</option><option value="转介绍">转介绍</option><option value="地推">地推</option><option value="电销">电销</option><option value="朋友圈">朋友圈</option><option value="业主群">业主群</option><option value="其他">其他</option></select>
+      <input type="text" id="sourceDetail12" placeholder="介绍人姓名/详情">
+    </div></div>
+    <details class="process-toggle"><summary>展开计算过程</summary><div class="process-box" id="process12"></div></details>
+    <table class="detail-table"><thead><tr><th>项目</th><th style="text-align:right">金额（元）</th></tr></thead><tbody id="detailBody12"></tbody></table>
+    <div class="result-box"><div class="r-label">最终报价</div><div class="r-price" id="finalPrice12">0</div><div class="r-note" id="finalNote12"></div>
+      <button class="btn-copy" onclick="copyResult12()">📋 复制报价结果</button><button class="btn-clear" onclick="reset12()">清空重算</button>
+    </div>
+  </div>
+
+  <!-- ===== 一对三 ===== -->
+  <div id="panel-13" class="tab-panel">
+    <div class="row">
+      <label>年级：</label>
+      <select id="gradeSelect13" onchange="on13GradeChange()">
+        <option value="">-- 请选择 --</option>
+        <option value="1-4">1-4年级</option><option value="5">5年级</option><option value="6">6年级</option>
+        <option value="7">初一</option><option value="8">初二</option><option value="9">初三</option>
+        <option value="10">高一</option><option value="11">高二</option><option value="12">高三</option>
+      </select>
+      <span id="hint13" style="font-size:12px;color:var(--text-sec)"></span>
+    </div>
+    <div class="row"><label>课时数：</label><input type="number" id="hours13" value="30" min="1" onchange="calc13()"><span style="font-size:12px;color:var(--text-sec)">课时（1课时=1小时）</span></div>
+    <div class="row"><label>课时单价：</label><input type="number" id="price13" value="100" min="0" onchange="calc13()"><span style="font-size:12px;color:var(--text-sec)">元/课时</span></div>
+    <div class="row"><label>服务费：</label><input type="number" id="serviceFee13" value="500" min="0" onchange="calc13()"><span style="font-size:12px;color:var(--text-sec)">元/期</span></div>
+    <div class="gift-hours"><label>赠送课时：</label><input type="number" id="gift13" value="0" min="0" onchange="calc13()"><span>课时（赠送的课时不计入收费，但计入总课时）</span></div>
+    <div class="discount-section"><h4>优惠设置</h4><div id="discList13"></div><button class="btn-add-disc" onclick="addDiscount13()">+ 添加优惠项</button></div>
+    <div class="source-section"><h4>客户来源</h4><div class="source-row">
+      <select id="sourceType13"><option value="">-- 来源 --</option><option value="转介绍">转介绍</option><option value="地推">地推</option><option value="电销">电销</option><option value="朋友圈">朋友圈</option><option value="业主群">业主群</option><option value="其他">其他</option></select>
+      <input type="text" id="sourceDetail13" placeholder="介绍人姓名/详情">
+    </div></div>
+    <details class="process-toggle"><summary>展开计算过程</summary><div class="process-box" id="process13"></div></details>
+    <table class="detail-table"><thead><tr><th>项目</th><th style="text-align:right">金额（元）</th></tr></thead><tbody id="detailBody13"></tbody></table>
+    <div class="result-box"><div class="r-label">最终报价</div><div class="r-price" id="finalPrice13">0</div><div class="r-note" id="finalNote13"></div>
+      <button class="btn-copy" onclick="copyResult13()">📋 复制报价结果</button><button class="btn-clear" onclick="reset13()">清空重算</button>
+    </div>
+  </div>
+
+  <!-- ===== 组合报价 ===== -->
+  <div id="panel-combo" class="tab-panel">
+    <div class="combo-add-btns">
+      <button class="btn-add-combo" onclick="addComboRowBanke()">+ 添加班课</button>
+      <button class="btn-add-combo" onclick="addComboRow11()">+ 添加一对一</button>
+      <button class="btn-add-combo" onclick="addComboRow12()">+ 添加一对二</button>
+      <button class="btn-add-combo" onclick="addComboRow13()">+ 添加一对三</button>
+      <button class="btn-add-combo" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 2px 8px rgba(16,185,129,.3)" onclick="autoImportToCombo()">📥 从上方导入</button>
+    </div>
+    <div class="combo-rows" id="comboRows"></div>
+    <div class="source-section" style="margin-top:16px">
+      <h4 onclick="toggleComboSource()" style="cursor:pointer;user-select:none">
+        <span id="comboSourceToggle" style="display:inline-block;transition:transform 0.2s">&#9654;</span>
+        客户来源
+      </h4>
+      <div id="comboSourceBody" style="display:none">
+        <div class="source-row">
+          <select id="comboSourceType"><option value="">-- 来源 --</option><option value="转介绍">转介绍</option><option value="地推">地推</option><option value="电销">电销</option><option value="朋友圈">朋友圈</option><option value="业主群">业主群</option><option value="其他">其他</option></select>
+          <input type="text" id="comboSourceDetail" placeholder="介绍人姓名/详情">
+        </div>
+      </div>
+    </div>
+    <div class="combo-final"><span>组合总计</span><span id="comboFinalPrice">0 元</span></div>
+    <button class="btn-copy" onclick="copyComboResult()">📋 复制报价结果</button>
+    <button class="btn-clear" onclick="resetCombo()">清空全部</button>
+  </div>
+</div>
+
+<script>
+// ========== Tab 切换 ==========
+function switchTab(btn,tab){
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='banke') calcBanke();
+  if(tab==='11') calc11();
+  if(tab==='12') calc12();
+  if(tab==='13') calc13();
+  if(tab==='combo') setTimeout(autoImportToCombo,100);
+}
+
+function toggleBankeDisc(){
+  var body=document.getElementById("bankeDiscBody");
+  var arrow=document.getElementById("bankeDiscToggle");
+  if(body.style.display==="none"){body.style.display="block";arrow.style.transform="rotate(90deg)";}
+  else{body.style.display="none";arrow.style.transform="rotate(0deg)";}
+}
+function toggleComboSource(){
+  var body=document.getElementById("comboSourceBody");
+  var arrow=document.getElementById("comboSourceToggle");
+  if(body.style.display==="none"){body.style.display="block";arrow.style.transform="rotate(90deg)";}
+  else{body.style.display="none";arrow.style.transform="rotate(0deg)";}
+}
+
+
+// ========== 班课数据 ==========
+var BANKE={
+  'yinianji':{name:'一年级',price:60,seasonHours:{'暑期':10,'秋季':18,'寒假':10,'春季':18}},
+  'ernienji':{name:'二年级',price:60,seasonHours:{'暑期':10,'秋季':18,'寒假':10,'春季':18}},
+  'x3-6':{name:'3-6年级',price:80,seasonHours:{'暑期':10,'秋季':18,'寒假':10,'春季':18},
+    specialPkgs:[{name:'399课时包·语文',sessions:10,hours:20,price:399},{name:'399课时包·数学',sessions:10,hours:20,price:399},{name:'399课时包·英语',sessions:10,hours:20,price:399}]},
+  'chuyi':{name:'初一',price:70,seasonHours:{'暑期':10,'秋季':18,'寒假':10,'春季':18},
+    summerPkgs:[{name:'暑期2科',sessions:20,hours:40,price:799,subj:2},{name:'暑期3科',sessions:30,hours:60,price:1599,subj:3}]},
+  'chuer':{name:'初二',price:80,seasonHours:{'暑期':10,'秋季':18,'寒假':10,'春季':18},
+    specialPkgs:[{name:'物理衔接',sessions:10,hours:20,price:199}]},
+  'chusan':{name:'初三',price:80,seasonHours:{'暑期':10,'秋季':18,'寒假':10,'春季':18},
+    specialPkgs:[{name:'化学衔接',sessions:10,hours:20,price:199}]},
+  'gaoyi':{name:'高一',price:100,seasonHours:{'暑期':10,'秋季':18,'寒假':10,'春季':18},
+    summerPkgs:[{name:'暑期1科',sessions:10,hours:20,price:800,subj:1},{name:'暑期2科',sessions:20,hours:40,price:1500,subj:2},{name:'暑期3科',sessions:30,hours:60,price:1599,subj:3}]},
+  'gaoer':{name:'高二',price:210,seasonHours:{'暑期':10,'秋季':18,'寒假':10,'春季':18}},
+  'gaosan':{name:'高三',price:230,seasonHours:{'暑期':15,'秋季':18,'寒假':10,'春季':18}}
+};
+
+// ========== 班课状态 ==========
+var bankeSelectedPkg=-1;
+var bankeSelectedSpecialPkg=[];
+var bankeSelectedSeasons={};
+var bankeSeasonDiscounts={};
+var bankeGlobalDiscounts=[{type:'fixed',note:'',amount:0}];
+var bankeMaterialItems=[];
+
+function onBankeGradeChange(){
+  var v=document.getElementById('gradeSelectBanke').value;
+  var hint=document.getElementById('bankePriceHint');
+  var area=document.getElementById('bankeSeasonArea');
+  area.innerHTML='';
+  bankeSelectedPkg=-1;bankeSelectedSpecialPkg=[];bankeSelectedSeasons={};bankeSeasonDiscounts={};
+  if(!v){hint.textContent='';renderBankeGlobalDiscs();renderBankeMaterialItems();calcBanke();return;}
+  var d=BANKE[v];
+  var hoursPerSession=2;
+  hint.textContent='参考单价：'+d.price+'元/课时（'+(d.price*hoursPerSession)+'元/次课）';
+  var html='';
+  // 暑期套餐
+  if(d.summerPkgs){
+    html+='<div style="margin:8px 0"><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">暑期套餐（一口价，不可编辑）</div><div class="pkg-cards" id="bankePkgCards">';
+    d.summerPkgs.forEach(function(p,i){
+      html+='<div class="pkg-card" onclick="selectBankePkg('+i+')" id="bankePkg'+i+'"><div class="pkg-name">'+p.name+'</div><div class="pkg-price">'+p.price+'元</div><div class="pkg-detail">'+p.sessions+'次'+p.hours+'课时</div></div>';
+    });
+    html+='</div></div>';
+  }
+  // 特殊课时包
+  if(d.specialPkgs){
+    html+='<div class="special-pkg-section"><h4>特殊课时包</h4><div class="pkg-cards" id="bankeSpecialPkgCards">';
+    d.specialPkgs.forEach(function(p,i){
+      html+='<div class="pkg-card" onclick="selectBankeSpecialPkg('+i+')" id="bankeSpecialPkg'+i+'"><div class="pkg-name">'+p.name+'</div><div class="pkg-price">'+p.price+'元</div><div class="pkg-detail">'+p.sessions+'次'+p.hours+'课时</div></div>';
+    });
+    html+='</div></div>';
+  }
+  // 季节卡片
+  var seasonOrder=['暑期','秋季','寒假','春季'];
+  html+='<div class="season-section"><h4>选择季节（可多选，每个季节可单独设折扣）：</h4><div class="season-cards" id="bankeSeasonCards">';
+  seasonOrder.forEach(function(s){
+    var h=(d.seasonHours&&d.seasonHours[s])?d.seasonHours[s]:10;
+    if(s==='暑期'&&d.summerPkgs)return;
+    html+='<div class="season-card" onclick="toggleBankeSeason(\''+s+'\','+h+')" id="bankeSC_'+s+'"><div>'+s+'</div><div class="s-detail">点击选择</div></div>';
+  });
+  html+='</div></div><div id="bankeSeasonInputs"></div>';
+  area.innerHTML=html;
+  renderBankeGlobalDiscs();
+  renderBankeMaterialItems();
+  calcBanke();
+}
+
+function selectBankePkg(i){
+  bankeSelectedPkg=(bankeSelectedPkg===i)?-1:i;
+  bankeSelectedSpecialPkg=[];
+  document.querySelectorAll('#bankePkgCards .pkg-card').forEach(function(c,idx){c.classList.toggle('selected',idx===bankeSelectedPkg)});
+  document.querySelectorAll('#bankeSpecialPkgCards .pkg-card').forEach(function(c){c.classList.remove('selected')});
+  calcBanke();
+}
+function selectBankeSpecialPkg(i){
+  var pos=bankeSelectedSpecialPkg.indexOf(i);
+  if(pos>=0)bankeSelectedSpecialPkg.splice(pos,1);
+  else bankeSelectedSpecialPkg.push(i);
+  bankeSelectedPkg=-1;
+  document.querySelectorAll('#bankeSpecialPkgCards .pkg-card').forEach(function(c,idx){c.classList.toggle('selected',bankeSelectedSpecialPkg.indexOf(idx)>=0)});
+  document.querySelectorAll('#bankePkgCards .pkg-card').forEach(function(c){c.classList.remove('selected')});
+  calcBanke();
+}
+function toggleBankeSeason(season,defaultSessions){
+  if(bankeSelectedSeasons[season]){delete bankeSelectedSeasons[season];delete bankeSeasonDiscounts[season];}
+  else{bankeSelectedSeasons[season]=defaultSessions||0;bankeSeasonDiscounts[season]={type:'fixed',amount:0};}
+  var card=document.getElementById('bankeSC_'+season);
+  if(card)card.classList.toggle('selected',!!bankeSelectedSeasons[season]);
+  renderBankeSeasonInputs();calcBanke();
+}
+function renderBankeSeasonInputs(){
+  var v=document.getElementById('gradeSelectBanke').value;
+  if(!v)return;
+  var html='';
+  var seasonOrder=['暑期','秋季','寒假','春季'];
+  seasonOrder.forEach(function(season){
+    if(!bankeSelectedSeasons[season])return;
+    if(season==='暑期'&&bankeSelectedPkg>=0)return;
+    var curS=bankeSelectedSeasons[season]||0;
+    var curH=curS*2;
+    var disc=bankeSeasonDiscounts[season]||{type:'fixed',amount:0};
+    html+='<div class="season-detail-row"><div class="season-name">'+season+'</div>';
+    html+='<label style="font-size:12px;color:var(--text-sec)">次课数：</label>';
+    html+='<input type="number" value="'+curS+'" min="1" onchange="onBankeSeasonSChange(\''+season+'\',this.value)">';
+    html+='<label style="font-size:12px;color:var(--text-sec);margin-left:6px">课时数：</label>';
+    html+='<input type="number" value="'+curH+'" min="1" disabled style="background:#F1F5F9;color:#94A3B8;width:65px">';
+    html+='<div style="margin-left:8px"><label style="font-size:12px;color:var(--text-sec)">折扣：</label>';
+    html+='<select onchange="onBankeSeasonDiscChange(\''+season+'\',\'type\',this.value)"><option value="fixed"'+(disc.type!=='discount'?' selected':'')+'>固定金额</option><option value="discount"'+(disc.type==='discount'?' selected':'')+'>折扣（折）</option></select>';
+    html+='<input type="number" value="'+(disc.amount||0)+'" min="0" onchange="onBankeSeasonDiscChange(\''+season+'\',\'amount\',this.value)">';
+    html+='<span style="font-size:11px;color:#94A3B8">'+(disc.type==='discount'?'折':'元')+'</span></div></div>';
+  });
+  var el=document.getElementById('bankeSeasonInputs');
+  if(el)el.innerHTML=html;
+}
+function onBankeSeasonSChange(season,val){bankeSelectedSeasons[season]=parseInt(val)||0;renderBankeSeasonInputs();calcBanke();}
+function onBankeSeasonDiscChange(season,key,val){
+  if(!bankeSeasonDiscounts[season])bankeSeasonDiscounts[season]={type:'fixed',amount:0};
+  if(key==='type'){bankeSeasonDiscounts[season].type=val;renderBankeSeasonInputs();}
+  if(key==='amount')bankeSeasonDiscounts[season].amount=parseInt(val)||0;
+  calcBanke();
+}
+
+// 全局优惠
+function renderBankeGlobalDiscs(){
+  var list=document.getElementById('bankeGlobalDiscList');
+  if(!list)return;
+  list.innerHTML='';
+  if(bankeGlobalDiscounts.length===0)bankeGlobalDiscounts.push({type:'fixed',note:'',amount:0});
+  bankeGlobalDiscounts.forEach(function(d,i){
+    var row=document.createElement('div');row.className='discount-row';
+    var isDiscount=d.type==='discount';
+    row.innerHTML='<select onchange="updBankeGlobalDisc('+i+',\'type\',this.value)"><option value="fixed"'+(!isDiscount?' selected':'')+'>固定金额（元）</option><option value="discount"'+(isDiscount?' selected':'')+'>折扣（折）</option></select>';
+    row.innerHTML+='<input type="text" value="'+(d.note||'')+'" placeholder="优惠说明" onchange="updBankeGlobalDisc('+i+',\'note\',this.value)">';
+    row.innerHTML+='<input type="number" value="'+(d.amount||0)+'" placeholder="'+(isDiscount?'折扣折':'金额')+'" onchange="updBankeGlobalDisc('+i+',\'amount\',this.value)"><span style="font-size:12px;color:var(--text-sec)">'+(isDiscount?'折':'元')+'</span><button class="btn-del" onclick="remBankeGlobalDisc('+i+')">&times;</button>';
+    list.appendChild(row);
+  });
+  calcBanke();
+}
+function addBankeGlobalDisc(){bankeGlobalDiscounts.push({type:'fixed',note:'',amount:0});renderBankeGlobalDiscs();}
+function remBankeGlobalDisc(i){if(bankeGlobalDiscounts.length>1){bankeGlobalDiscounts.splice(i,1);renderBankeGlobalDiscs();}}
+function updBankeGlobalDisc(i,key,val){
+  if(key==='type')bankeGlobalDiscounts[i].type=val;
+  else if(key==='amount')bankeGlobalDiscounts[i].amount=parseInt(val)||0;
+  else if(key==='note')bankeGlobalDiscounts[i].note=val;
+  renderBankeGlobalDiscs();
+}
+
+// 资料费
+function renderBankeMaterialItems(){
+  var list=document.getElementById('bankeMaterialList');
+  if(!list)return;
+  list.innerHTML='';
+  if(bankeMaterialItems.length===0){var empty=document.createElement('div');empty.style.cssText='font-size:12px;color:#94A3B8;padding:6px 0';empty.textContent='暂无资料费项目';list.appendChild(empty);}
+  bankeMaterialItems.forEach(function(it,i){
+    var row=document.createElement('div');row.className='material-item';
+    row.innerHTML='<input type="text" value="'+(it.desc||'')+'" placeholder="说明（如：数学秋季资料费）" onchange="updBankeMaterialItem('+i+',\'desc\',this.value)"><input type="number" value="'+(it.amount||0)+'" placeholder="金额" min="0" onchange="updBankeMaterialItem('+i+',\'amount\',this.value)"><span style="font-size:12px;color:var(--text-sec)">元</span><button class="btn-del" onclick="remBankeMaterialItem('+i+')">&times;</button>';
+    list.appendChild(row);
+  });
+  calcBanke();
+}
+function addBankeMaterialItem(){bankeMaterialItems.push({desc:'',amount:0});renderBankeMaterialItems();}
+function remBankeMaterialItem(i){bankeMaterialItems.splice(i,1);renderBankeMaterialItems();}
+function updBankeMaterialItem(i,key,val){
+  if(key==='desc')bankeMaterialItems[i].desc=val;
+  else if(key==='amount')bankeMaterialItems[i].amount=parseInt(val)||0;
+  renderBankeMaterialItems();
+}
+
+// 班课核心计算
+function calcBanke(){
+  var v=document.getElementById('gradeSelectBanke').value;
+  if(!v){document.getElementById('bankeFinalPrice').textContent='0';document.getElementById('bankeDetailBody').innerHTML='';document.getElementById('bankeProcess').innerHTML='';return;}
+  var d=BANKE[v];
+  var hoursPerSession=2;
+  var processLines=[];
+  var lineNum=0;
+  var totalCourseFee=0,totalHours=0;
+  var discDetailLines=[];
+  // 套餐
+  if(bankeSelectedPkg>=0&&d.summerPkgs){
+    var pkg=d.summerPkgs[bankeSelectedPkg];
+    lineNum++;totalCourseFee+=pkg.price;totalHours+=pkg.hours;
+    processLines.push('<div class="step-line"><span class="step-num">'+lineNum+'</span> 套餐：'+pkg.name+'（'+pkg.sessions+'次'+pkg.hours+'课时）= <span class="highlight">'+pkg.price+'元</span>（一口价，无折扣）</div>');
+  }
+  // 季节
+  var seasonOrder=['暑期','秋季','寒假','春季'];
+  seasonOrder.forEach(function(season){
+    if(!bankeSelectedSeasons[season])return;
+    var sessions=bankeSelectedSeasons[season]||0;
+    if(sessions<=0)return;
+    if(season==='暑期'&&bankeSelectedPkg>=0&&d.summerPkgs)return;
+    var h=sessions*hoursPerSession;
+    var fee=h*d.price;
+    var disc=bankeSeasonDiscounts[season]||{type:'fixed',amount:0};
+    var discAmt=0;
+    if(disc.amount>0)discAmt=disc.type==='discount'?Math.round(fee*(100-disc.amount)/100):disc.amount;
+    var feeAfterDisc=fee-discAmt;
+    totalCourseFee+=feeAfterDisc;totalHours+=h;
+    lineNum++;
+    var discStr=discAmt>0?'，折扣后 <span class="highlight">'+feeAfterDisc+'元</span>':'';
+    processLines.push('<div class="step-line"><span class="step-num">'+lineNum+'</span> '+season+'：'+sessions+'次（'+h+'课时）× '+d.price+'元/课时 = '+fee+'元'+discStr+'</div>');
+  });
+  // 特殊课时包
+  if(bankeSelectedSpecialPkg.length>0&&d.specialPkgs){
+    bankeSelectedSpecialPkg.forEach(function(idx){
+      var pkg=d.specialPkgs[idx];if(!pkg)return;
+      lineNum++;totalCourseFee+=pkg.price;totalHours+=pkg.hours;
+      processLines.push('<div class="step-line"><span class="step-num">'+lineNum+'</span> 特殊课时包：'+pkg.name+'（'+pkg.sessions+'次'+pkg.hours+'课时）= <span class="highlight">'+pkg.price+'元</span>（一口价，叠加）</div>');
+    });
+  }
+  // 资料费
+  var totalMaterial=0;
+  bankeMaterialItems.forEach(function(it){totalMaterial+=it.amount||0});
+  if(totalMaterial>0){
+    lineNum++;
+    var matDetail=bankeMaterialItems.map(function(it){return it.desc+' '+it.amount+'元'}).join(' + ');
+    processLines.push('<div class="step-line"><span class="step-num">'+lineNum+'</span> 资料费（不参折扣）：'+matDetail+' <span class="highlight">'+totalMaterial+'元/科/季</span> ★</div>');
+  }
+  // 全局优惠
+  var globalDiscFixed=0,globalDiscPct=0;
+  bankeGlobalDiscounts.forEach(function(d){
+    if(!d.amount)return;
+    lineNum++;
+    if(d.type==='discount'){var pctAmt=Math.round(totalCourseFee*(100-d.amount)/100);globalDiscPct+=pctAmt;discDetailLines.push('<div class="step-line"><span class="step-num">'+lineNum+'</span> 额外折扣'+d.amount+'折：课时费 '+totalCourseFee+'元 × （100-'+d.amount+'）/100 = <span class="highlight">-'+pctAmt+'元</span>（资料费不参与打折）</div>');}
+    else{globalDiscFixed+=d.amount;discDetailLines.push('<div class="step-line"><span class="step-num">'+lineNum+'</span> 额外优惠：'+(d.note||'优惠')+' <span class="highlight">-'+d.amount+'元</span></div>');}
+  });
+  var subtotal=totalCourseFee+totalMaterial;
+  var courseFeeAfterDisc=Math.max(0,totalCourseFee-globalDiscFixed-globalDiscPct);
+  var totalGlobalDisc=globalDiscFixed+globalDiscPct;
+  var final=courseFeeAfterDisc+totalMaterial;
+  lineNum++;
+  processLines.push('<div class="step-line"><span class="step-num">'+lineNum+'</span> 小计：课时费 '+totalCourseFee+' + 资料费 '+totalMaterial+' = <span class="highlight">'+subtotal+'元</span></div>');
+  discDetailLines.forEach(function(l){processLines.push(l)});
+  if(totalGlobalDisc>0){lineNum++;processLines.push('<div class="step-line" style="font-weight:700;color:#DC2626"><span class="step-num">'+lineNum+'</span> 优惠合计：-'+totalGlobalDisc+'元（全部从课时费减免，资料费不变）</div>');}
+  lineNum++;
+  processLines.push('<div class="step-line" style="font-weight:700;font-size:13px;color:#059669"><span class="step-num">★</span> 课程价格：课时费 '+totalCourseFee+(totalGlobalDisc>0?' - '+totalGlobalDisc:'')+' + 资料费 '+totalMaterial+' = <span class="highlight">'+final+'元</span></div>');
+  document.getElementById('bankeProcess').innerHTML=processLines.join('');
+  document.getElementById('bankeFinalPrice').textContent=formatNum(final);
+  // 明细表
+  var rows='<tr><td>课时费（'+totalHours+'课时）</td><td style="text-align:right">'+formatNum(totalCourseFee)+' 元</td></tr>';
+  bankeMaterialItems.forEach(function(it){if(!it.amount)return;rows+='<tr><td>资料费（不参折扣）：'+(it.desc||'资料费')+'</td><td style="text-align:right">'+(it.amount||0)+' 元/科/季 ★</td></tr>';});
+  if(globalDiscFixed>0)rows+='<tr><td style="color:#DC2626">- 额外固定优惠</td><td style="text-align:right;color:#DC2626">-'+formatNum(globalDiscFixed)+' 元</td></tr>';
+  if(globalDiscPct>0)rows+='<tr><td style="color:#DC2626">- 额外折扣优惠</td><td style="text-align:right;color:#DC2626">-'+formatNum(globalDiscPct)+' 元</td></tr>';
+  rows+='<tr><td style="color:#059669;font-weight:600">课程价格</td><td style="text-align:right;color:#059669;font-weight:600;font-size:15px">'+formatNum(final)+' 元</td></tr>';
+  document.getElementById('bankeDetailBody').innerHTML=rows;
+}
+function formatNum(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function resetBanke(){
+  document.getElementById('gradeSelectBanke').value='';
+  document.getElementById('bankeSeasonArea').innerHTML='';
+  bankeSelectedPkg=-1;bankeSelectedSpecialPkg=[];bankeSelectedSeasons={};bankeSeasonDiscounts={};
+  bankeGlobalDiscounts=[{type:'fixed',note:'',amount:0}];bankeMaterialItems=[];
+  renderBankeGlobalDiscs();renderBankeMaterialItems();calcBanke();
+}
+function copyBankeResult(){
+  var priceEl=document.getElementById('bankeFinalPrice');
+  var price=priceEl?priceEl.textContent:'0';
+  var sel=document.getElementById('gradeSelectBanke');
+  var grade=sel.selectedOptions[0]?sel.selectedOptions[0].text:'';
+  var sourceType=document.getElementById('bankeSourceType').value;
+  var sourceDetail=document.getElementById('bankeSourceDetail').value;
+  var txt='【班课报价】\n年级：'+grade+'\n';
+  if(bankeMaterialItems.length>0){bankeMaterialItems.forEach(function(it){if(it.amount>0)txt+='  - 资料费（不参折扣）：'+(it.desc||'资料费')+' '+it.amount+'元/科/季 ★\n';});}
+  txt+='课程价格：'+price+'元\n';
+  if(sourceType)txt+='来源：'+sourceType+' '+sourceDetail+'\n';
+  txt+='（资料费不参与打折，季节折扣各自独立）';
+  navigator.clipboard.writeText(txt).then(function(){alert('已复制到剪贴板！')}).catch(function(){alert(txt)});
+}
+
+// ========== 一对一/一对二 价格表 ==========
+var PRICE11={'1-4':130,'5':235,'6':260,'7':285,'8':295,'9':330,'10':335,'11':345,'12':400};
+var PRICE12={'1-4':120,'5':180,'6':195,'7':215,'8':220,'9':245,'10':250,'11':260,'12':300};
+var PRICE13={'1-4':100,'5':160,'6':180,'7':195,'8':200,'9':230,'10':225,'11':245,'12':270};
+
+function on11GradeChange(){
+  var v=document.getElementById('gradeSelect11').value;
+  var hint=document.getElementById('hint11');
+  if(PRICE11[v]){document.getElementById('price11').value=PRICE11[v];hint.textContent='默认单价：'+PRICE11[v]+'元/课时';}else{hint.textContent='';}
+  calc11();
+}
+function on12GradeChange(){
+  var v=document.getElementById('gradeSelect12').value;
+  var hint=document.getElementById('hint12');
+  if(PRICE12[v]){document.getElementById('price12').value=PRICE12[v];hint.textContent='默认单价：'+PRICE12[v]+'元/课时';}else{hint.textContent='';}
+  calc12();
+}
+function on13GradeChange(){
+  var v=document.getElementById('gradeSelect13').value;
+  var hint=document.getElementById('hint13');
+  if(PRICE13[v]){document.getElementById('price13').value=PRICE13[v];hint.textContent='默认单价：'+PRICE13[v]+'元/课时';}else{hint.textContent='';}
+  calc13();
+}
+
+// 一对一优惠
+var discounts11=[{type:'fixed',note:'',amount:0}];
+function renderDisc11(){
+  var list=document.getElementById('discList11');if(!list)return;list.innerHTML='';
+  discounts11.forEach(function(d,i){
+    var row=document.createElement('div');row.className='discount-row';var isDiscount=d.type==='discount';
+    row.innerHTML='<select onchange="updDisc11('+i+',\'type\',this.value)"><option value="fixed"'+(!isDiscount?' selected':'')+'>固定金额（元）</option><option value="discount"'+(isDiscount?' selected':'')+'>折扣（折）</option></select><input type="text" value="'+(d.note||'')+'" placeholder="优惠说明" onchange="updDisc11('+i+',\'note\',this.value)"><input type="number" value="'+(d.amount||0)+'" onchange="updDisc11('+i+',\'amount\',this.value)"><span style="font-size:12px;color:var(--text-sec)">'+(isDiscount?'折':'元')+'</span><button class="btn-del" onclick="remDisc11('+i+')">&times;</button>';
+    list.appendChild(row);
+  });calc11();
+}
+function addDiscount11(){discounts11.push({type:'fixed',note:'',amount:0});renderDisc11();}
+function remDisc11(i){if(discounts11.length>1){discounts11.splice(i,1);renderDisc11();}}
+function updDisc11(i,key,val){if(key==='type')discounts11[i].type=val;else if(key==='amount')discounts11[i].amount=parseInt(val)||0;else if(key==='note')discounts11[i].note=val;renderDisc11();}
+
+// 一对二优惠
+var discounts12=[{type:'fixed',note:'',amount:0}];
+function renderDisc12(){
+  var list=document.getElementById('discList12');if(!list)return;list.innerHTML='';
+  discounts12.forEach(function(d,i){
+    var row=document.createElement('div');row.className='discount-row';var isDiscount=d.type==='discount';
+    row.innerHTML='<select onchange="updDisc12('+i+',\'type\',this.value)"><option value="fixed"'+(!isDiscount?' selected':'')+'>固定金额（元）</option><option value="discount"'+(isDiscount?' selected':'')+'>折扣（折）</option></select><input type="text" value="'+(d.note||'')+'" placeholder="优惠说明" onchange="updDisc12('+i+',\'note\',this.value)"><input type="number" value="'+(d.amount||0)+'" onchange="updDisc12('+i+',\'amount\',this.value)"><span style="font-size:12px;color:var(--text-sec)">'+(isDiscount?'折':'元')+'</span><button class="btn-del" onclick="remDisc12('+i+')">&times;</button>';
+    list.appendChild(row);
+  });calc12();
+}
+function addDiscount12(){discounts12.push({type:'fixed',note:'',amount:0});renderDisc12();}
+function remDisc12(i){if(discounts12.length>1){discounts12.splice(i,1);renderDisc12();}}
+function updDisc12(i,key,val){if(key==='type')discounts12[i].type=val;else if(key==='amount')discounts12[i].amount=parseInt(val)||0;else if(key==='note')discounts12[i].note=val;renderDisc12();}
+
+// 一对三优惠
+var discounts13=[{type:'fixed',note:'',amount:0}];
+function renderDisc13(){
+  var list=document.getElementById('discList13');if(!list)return;list.innerHTML='';
+  discounts13.forEach(function(d,i){
+    var row=document.createElement('div');row.className='discount-row';var isDiscount=d.type==='discount';
+    row.innerHTML='<select onchange="updDisc13('+i+',\'type\',this.value)"><option value="fixed"'+(!isDiscount?' selected':'')+'>固定金额（元）</option><option value="discount"'+(isDiscount?' selected':'')+'>折扣（折）</option></select><input type="text" value="'+(d.note||'')+'" placeholder="优惠说明" onchange="updDisc13('+i+',\'note\',this.value)"><input type="number" value="'+(d.amount||0)+'" onchange="updDisc13('+i+',\'amount\',this.value)"><span style="font-size:12px;color:var(--text-sec)">'+(isDiscount?'折':'元')+'</span><button class="btn-del" onclick="remDisc13('+i+')">&times;</button>';
+    list.appendChild(row);
+  });calc13();
+}
+function addDiscount13(){discounts13.push({type:'fixed',note:'',amount:0});renderDisc13();}
+function remDisc13(i){if(discounts13.length>1){discounts13.splice(i,1);renderDisc13();}}
+function updDisc13(i,key,val){if(key==='type')discounts13[i].type=val;else if(key==='amount')discounts13[i].amount=parseInt(val)||0;else if(key==='note')discounts13[i].note=val;renderDisc13();}
+
+// 一对一计算
+function calc11(){
+  var hours=parseInt(document.getElementById('hours11').value)||0;
+  var price=parseInt(document.getElementById('price11').value)||0;
+  var sFee=parseInt(document.getElementById('serviceFee11').value)||0;
+  var gift=parseInt(document.getElementById('gift11').value)||0;
+  var courseFee=hours*price;
+  var subTotal=courseFee+sFee;
+  var discFixed=0,discPct=0;
+  discounts11.forEach(function(d){if(!d.amount)return;if(d.type==='discount')discPct+=Math.round(courseFee*(100-d.amount)/100);else discFixed+=d.amount||0;});
+  var totalDisc=discFixed+discPct;
+  var final=Math.max(0,subTotal-totalDisc);
+  var proc='<div class="step-line"><span class="step-num">1</span> 课时费：'+hours+'课时 × '+price+'元/课时 = <span class="highlight">'+courseFee+'元</span></div>';
+  proc+='<div class="step-line"><span class="step-num">2</span> 服务费：'+sFee+'元</div>';
+  if(gift>0)proc+='<div class="step-line"><span class="step-num">+</span> 赠送课时：'+gift+'课时（不收费，计入总课时）</div>';
+  proc+='<div class="step-line"><span class="step-num">3</span> 小计：'+subTotal+'元</div>';
+  discounts11.forEach(function(d){if(!d.amount)return;if(d.type==='discount')proc+='<div class="step-line"><span class="step-num">折</span> '+d.amount+'折：课时费'+courseFee+'元 × （100-'+d.amount+'）/100 = <span class="highlight">-'+Math.round(courseFee*(100-d.amount)/100)+'元</span></div>';else proc+='<div class="step-line"><span class="step-num">折</span> 优惠：'+(d.note||'优惠')+' <span class="highlight">-'+d.amount+'元</span></div>';});
+  proc+='<div class="step-line" style="font-weight:700;font-size:13px;color:#059669"><span class="step-num">★</span> 课程价格：'+subTotal+(totalDisc>0?' - '+totalDisc:'')+' = <span class="highlight">'+final+'元</span></div>';
+  document.getElementById('process11').innerHTML=proc;
+  document.getElementById('finalPrice11').textContent=formatNum(final);
+  var rows='<tr><td>课时费（'+hours+'课时'+(gift>0?'，赠'+gift+'课时':'')+')</td><td style="text-align:right">'+formatNum(courseFee)+' 元</td></tr>';
+  rows+='<tr><td>服务费</td><td style="text-align:right">'+formatNum(sFee)+' 元</td></tr>';
+  if(discFixed>0)rows+='<tr><td style="color:#DC2626">- 固定优惠</td><td style="text-align:right;color:#DC2626">-'+formatNum(discFixed)+' 元</td></tr>';
+  if(discPct>0)rows+='<tr><td style="color:#DC2626">- 折扣优惠</td><td style="text-align:right;color:#DC2626">-'+formatNum(discPct)+' 元</td></tr>';
+  rows+='<tr><td style="color:#059669;font-weight:600">课程价格</td><td style="text-align:right;color:#059669;font-weight:600;font-size:15px">'+formatNum(final)+' 元</td></tr>';
+  document.getElementById('detailBody11').innerHTML=rows;
+}
+function copyResult11(){
+  var priceEl=document.getElementById('finalPrice11');
+  var price=priceEl?priceEl.textContent:'0';
+  var sel=document.getElementById('gradeSelect11');
+  var grade=sel.selectedOptions[0]?sel.selectedOptions[0].text:'';
+  var gift=document.getElementById('gift11').value||'0';
+  var txt='【一对一报价】\n年级：'+grade+'\n课时数：'+document.getElementById('hours11').value+'课时';
+  if(parseInt(gift)>0)txt+='（赠'+gift+'课时）';
+  txt+='\n课程价格：'+price+'元';
+  var sourceType=document.getElementById('sourceType11').value;
+  var sourceDetail=document.getElementById('sourceDetail11').value;
+  if(sourceType)txt+='\n来源：'+sourceType+' '+sourceDetail;
+  navigator.clipboard.writeText(txt).then(function(){alert('已复制！')}).catch(function(){alert(txt)});
+}
+function reset11(){
+  document.getElementById('gradeSelect11').value='';
+  document.getElementById('hours11').value=30;document.getElementById('price11').value=130;
+  document.getElementById('serviceFee11').value=500;document.getElementById('gift11').value=0;
+  discounts11=[{type:'fixed',note:'',amount:0}];renderDisc11();calc11();
+}
+
+// 一对二计算
+function calc12(){
+  var hours=parseInt(document.getElementById('hours12').value)||0;
+  var price=parseInt(document.getElementById('price12').value)||0;
+  var sFee=parseInt(document.getElementById('serviceFee12').value)||0;
+  var gift=parseInt(document.getElementById('gift12').value)||0;
+  var courseFee=hours*price;
+  var subTotal=courseFee+sFee;
+  var discFixed=0,discPct=0;
+  discounts12.forEach(function(d){if(!d.amount)return;if(d.type==='discount')discPct+=Math.round(courseFee*(100-d.amount)/100);else discFixed+=d.amount||0;});
+  var totalDisc=discFixed+discPct;
+  var final=Math.max(0,subTotal-totalDisc);
+  var proc='<div class="step-line"><span class="step-num">1</span> 课时费：'+hours+'课时 × '+price+'元/课时 = <span class="highlight">'+courseFee+'元</span></div>';
+  proc+='<div class="step-line"><span class="step-num">2</span> 服务费：'+sFee+'元</div>';
+  if(gift>0)proc+='<div class="step-line"><span class="step-num">+</span> 赠送课时：'+gift+'课时（不收费，计入总课时）</div>';
+  proc+='<div class="step-line"><span class="step-num">3</span> 小计：'+subTotal+'元</div>';
+  discounts12.forEach(function(d){if(!d.amount)return;if(d.type==='discount')proc+='<div class="step-line"><span class="step-num">折</span> '+d.amount+'折：课时费'+courseFee+'元 × （100-'+d.amount+'）/100 = <span class="highlight">-'+Math.round(courseFee*(100-d.amount)/100)+'元</span></div>';else proc+='<div class="step-line"><span class="step-num">折</span> 优惠：'+(d.note||'优惠')+' <span class="highlight">-'+d.amount+'元</span></div>';});
+  proc+='<div class="step-line" style="font-weight:700;font-size:13px;color:#059669"><span class="step-num">★</span> 课程价格：'+subTotal+(totalDisc>0?' - '+totalDisc:'')+' = <span class="highlight">'+final+'元</span></div>';
+  document.getElementById('process12').innerHTML=proc;
+  document.getElementById('finalPrice12').textContent=formatNum(final);
+  var rows='<tr><td>课时费（'+hours+'课时'+(gift>0?'，赠'+gift+'课时':'')+')</td><td style="text-align:right">'+formatNum(courseFee)+' 元</td></tr>';
+  rows+='<tr><td>服务费</td><td style="text-align:right">'+formatNum(sFee)+' 元</td></tr>';
+  if(discFixed>0)rows+='<tr><td style="color:#DC2626">- 固定优惠</td><td style="text-align:right;color:#DC2626">-'+formatNum(discFixed)+' 元</td></tr>';
+  if(discPct>0)rows+='<tr><td style="color:#DC2626">- 折扣优惠</td><td style="text-align:right;color:#DC2626">-'+formatNum(discPct)+' 元</td></tr>';
+  rows+='<tr><td style="color:#059669;font-weight:600">课程价格</td><td style="text-align:right;color:#059669;font-weight:600;font-size:15px">'+formatNum(final)+' 元</td></tr>';
+  document.getElementById('detailBody12').innerHTML=rows;
+}
+function copyResult12(){
+  var priceEl=document.getElementById('finalPrice12');
+  var price=priceEl?priceEl.textContent:'0';
+  var sel=document.getElementById('gradeSelect12');
+  var grade=sel.selectedOptions[0]?sel.selectedOptions[0].text:'';
+  var gift=document.getElementById('gift12').value||'0';
+  var txt='【一对二报价】\n年级：'+grade+'\n课时数：'+document.getElementById('hours12').value+'课时';
+  if(parseInt(gift)>0)txt+='（赠'+gift+'课时）';
+  txt+='\n课程价格：'+price+'元';
+  var sourceType=document.getElementById('sourceType12').value;
+  var sourceDetail=document.getElementById('sourceDetail12').value;
+  if(sourceType)txt+='\n来源：'+sourceType+' '+sourceDetail;
+  navigator.clipboard.writeText(txt).then(function(){alert('已复制！')}).catch(function(){alert(txt)});
+}
+function reset12(){
+  document.getElementById('gradeSelect12').value='';
+  document.getElementById('hours12').value=30;document.getElementById('price12').value=120;
+  document.getElementById('serviceFee12').value=500;document.getElementById('gift12').value=0;
+  discounts12=[{type:'fixed',note:'',amount:0}];renderDisc12();calc12();
+}
+
+// 一对三计算
+function calc13(){
+  var hours=parseInt(document.getElementById('hours13').value)||0;
+  var price=parseInt(document.getElementById('price13').value)||0;
+  var sFee=parseInt(document.getElementById('serviceFee13').value)||0;
+  var gift=parseInt(document.getElementById('gift13').value)||0;
+  var courseFee=hours*price;
+  var subTotal=courseFee+sFee;
+  var discFixed=0,discPct=0;
+  discounts13.forEach(function(d){if(!d.amount)return;if(d.type==='discount')discPct+=Math.round(courseFee*(100-d.amount)/100);else discFixed+=d.amount||0;});
+  var totalDisc=discFixed+discPct;
+  var final=Math.max(0,subTotal-totalDisc);
+  var proc='<div class="step-line"><span class="step-num">1</span> 课时费：'+hours+'课时 × '+price+'元/课时 = <span class="highlight">'+courseFee+'元</span></div>';
+  proc+='<div class="step-line"><span class="step-num">2</span> 服务费：'+sFee+'元</div>';
+  if(gift>0)proc+='<div class="step-line"><span class="step-num">+</span> 赠送课时：'+gift+'课时（不收费，计入总课时）</div>';
+  proc+='<div class="step-line"><span class="step-num">3</span> 小计：'+subTotal+'元</div>';
+  discounts13.forEach(function(d){if(!d.amount)return;if(d.type==='discount')proc+='<div class="step-line"><span class="step-num">折</span> '+d.amount+'折：课时费'+courseFee+'元 × （100-'+d.amount+'）/100 = <span class="highlight">-'+Math.round(courseFee*(100-d.amount)/100)+'元</span></div>';else proc+='<div class="step-line"><span class="step-num">折</span> 优惠：'+(d.note||'优惠')+' <span class="highlight">-'+d.amount+'元</span></div>';});
+  proc+='<div class="step-line" style="font-weight:700;font-size:13px;color:#059669"><span class="step-num">★</span> 课程价格：'+subTotal+(totalDisc>0?' - '+totalDisc:'')+' = <span class="highlight">'+final+'元</span></div>';
+  document.getElementById('process13').innerHTML=proc;
+  document.getElementById('finalPrice13').textContent=formatNum(final);
+  var rows='<tr><td>课时费（'+hours+'课时'+(gift>0?'，赠'+gift+'课时':'')+')</td><td style="text-align:right">'+formatNum(courseFee)+' 元</td></tr>';
+  rows+='<tr><td>服务费</td><td style="text-align:right">'+formatNum(sFee)+' 元</td></tr>';
+  if(discFixed>0)rows+='<tr><td style="color:#DC2626">- 固定优惠</td><td style="text-align:right;color:#DC2626">-'+formatNum(discFixed)+' 元</td></tr>';
+  if(discPct>0)rows+='<tr><td style="color:#DC2626">- 折扣优惠</td><td style="text-align:right;color:#DC2626">-'+formatNum(discPct)+' 元</td></tr>';
+  rows+='<tr><td style="color:#059669;font-weight:600">课程价格</td><td style="text-align:right;color:#059669;font-weight:600;font-size:15px">'+formatNum(final)+' 元</td></tr>';
+  document.getElementById('detailBody13').innerHTML=rows;
+}
+function copyResult13(){
+  var priceEl=document.getElementById('finalPrice13');
+  var price=priceEl?priceEl.textContent:'0';
+  var sel=document.getElementById('gradeSelect13');
+  var grade=sel.selectedOptions[0]?sel.selectedOptions[0].text:'';
+  var gift=document.getElementById('gift13').value||'0';
+  var txt='【一对三报价】\n年级：'+grade+'\n课时数：'+document.getElementById('hours13').value+'课时';
+  if(parseInt(gift)>0)txt+='（赠'+gift+'课时）';
+  txt+='\n课程价格：'+price+'元';
+  var sourceType=document.getElementById('sourceType13').value;
+  var sourceDetail=document.getElementById('sourceDetail13').value;
+  if(sourceType)txt+='\n来源：'+sourceType+' '+sourceDetail;
+  navigator.clipboard.writeText(txt).then(function(){alert('已复制！')}).catch(function(){alert(txt)});
+}
+function reset13(){
+  document.getElementById('gradeSelect13').value='';
+  document.getElementById('hours13').value=30;document.getElementById('price13').value=100;
+  document.getElementById('serviceFee13').value=500;document.getElementById('gift13').value=0;
+  discounts13=[{type:'fixed',note:'',amount:0}];renderDisc13();calc13();
+}
+
+// ========== 组合报价 ==========
+var comboRows=[];var comboIdCounter=0;
+function addComboRowBanke(){
+  comboIdCounter++;
+  comboRows.push({id:comboIdCounter,type:'banke',grade:'',sessions:10,price:80});
+  renderComboRows();
+}
+function addComboRow11(){
+  comboIdCounter++;
+  comboRows.push({id:comboIdCounter,type:'11',grade:'',hours:30,price:130,serviceFee:500});
+  renderComboRows();
+}
+function addComboRow12(){
+  comboIdCounter++;
+  comboRows.push({id:comboIdCounter,type:'12',grade:'',hours:30,price:120,serviceFee:500});
+  renderComboRows();
+}
+function addComboRow13(){
+  comboIdCounter++;
+  comboRows.push({id:comboIdCounter,type:'13',grade:'',hours:30,price:100,serviceFee:500});
+  renderComboRows();
+}
+function removeComboRow(id){comboRows=comboRows.filter(function(r){return r.id!==id});renderComboRows();}
+function updateComboRow(id,field,val){
+  var row=comboRows.find(function(r){return r.id===id});
+  if(!row)return;
+  if(field==='type'){row.type=val;if(val==='11')row.price=130;else if(val==='12')row.price=120;else if(val==='13')row.price=100;else row.price=80;}
+  else if(field==='hours')row.hours=parseInt(val)||0;
+  else if(field==='price')row.price=parseInt(val)||0;
+  else if(field==='serviceFee')row.serviceFee=parseInt(val)||0;
+  else if(field==='sessions')row.sessions=parseInt(val)||0;
+  renderComboRows();
+}
+function renderComboRows(){
+  var container=document.getElementById('comboRows');
+  container.innerHTML='';
+  var total=0;
+  comboRows.forEach(function(r,i){
+    var finalPrice=0;
+    var typeNames={'banke':'班课','11':'一对一','12':'一对二','13':'一对三'};
+    var processHtml='';
+    
+    if(r.type==='banke'){
+      // 班课：使用导入的最终价格
+      finalPrice=r.finalPrice||0;
+      total+=finalPrice;
+    }else{
+      // 一对一/二/三：计算课时费、服务费、折扣
+      var courseFee=(r.hours||0)*(r.price||0);
+      var sFee=(r.serviceFee||0);
+      var discFixed=0,discPct=0;
+      if(r.discounts){
+        r.discounts.forEach(function(d){
+          if(!d.amount)return;
+          if(d.type==='discount')discPct+=Math.round(courseFee*(100-d.amount)/100);
+          else discFixed+=d.amount||0;
+        });
+      }
+      finalPrice=Math.max(0,courseFee+sFee-discPct-discFixed);
+      total+=finalPrice;
+      
+      // 生成计算过程
+      processHtml='<div style="font-size:12px;color:var(--text-sec);margin-top:4px">';
+      processHtml+='课时费：'+(r.hours||0)+'课时 × '+(r.price||0)+'元 = '+formatNum(courseFee)+'元<br>';
+      if(sFee>0)processHtml+='服务费：'+formatNum(sFee)+'元<br>';
+      if(discPct>0)processHtml+='折扣减免：-'+formatNum(discPct)+'元<br>';
+      if(discFixed>0)processHtml+='优惠减免：-'+formatNum(discFixed)+'元<br>';
+      processHtml+='<b>小计：'+formatNum(finalPrice)+'元</b>';
+      processHtml+='<div style="margin-top:4px;font-size:13px;color:#059669;font-weight:700">★ 课程价格：'+formatNum(courseFee)+(sFee>0?' + 服务费 '+formatNum(sFee):'')+(discPct+discFixed>0?' - 优惠'+(discPct+discFixed)+'元':'')+' = <span style="color:#059669">'+formatNum(finalPrice)+'元</span></div>';
+      processHtml+='</div>';
+    }
+    
+    var div=document.createElement('div');div.className='combo-row';
+    var html='<div style="flex:1"><div style="font-weight:600;color:var(--text);margin-bottom:4px">'+typeNames[r.type]+' #'+(i+1)+'</div>';
+    
+    if(r.type==='banke'){
+      html+='<div class="combo-fields" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+      html+='<input type="number" value="'+(r.sessions||10)+'" min="1" onchange="updateComboRow('+r.id+',\'sessions\',this.value)" style="width:60px"><span style="font-size:12px;color:var(--text-sec)">次</span>';
+      html+='<input type="number" value="'+(r.price||0)+'" min="0" onchange="updateComboRow('+r.id+',\'price\',this.value)" style="width:65px"><span style="font-size:12px;color:var(--text-sec)">元/课时</span>';
+      html+='</div>';
+      // 显示班课计算过程
+      if(r.processHtml){
+        html+='<div style="font-size:12px;color:var(--text-sec);margin-top:6px;max-height:120px;overflow-y:auto">'+r.processHtml+'</div>';
+      }
+    }else{
+      html+='<div class="combo-fields" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+      html+='<input type="number" value="'+(r.hours||0)+'" min="1" onchange="updateComboRow('+r.id+',\'hours\',this.value)" style="width:60px"><span style="font-size:12px;color:var(--text-sec)">课时</span>';
+      html+='<input type="number" value="'+(r.price||0)+'" min="0" onchange="updateComboRow('+r.id+',\'price\',this.value)" style="width:65px"><span style="font-size:12px;color:var(--text-sec)">元</span>';
+      html+='<input type="number" value="'+(r.serviceFee||0)+'" min="0" onchange="updateComboRow('+r.id+',\'serviceFee\',this.value)" style="width:60px"><span style="font-size:12px;color:var(--text-sec)">服务费</span>';
+      html+='</div>';
+      // 显示计算过程
+      html+=processHtml;
+    }
+    
+    html+='</div><span class="combo-subtotal" style="white-space:nowrap">'+formatNum(finalPrice)+'元</span>';
+    html+='<button class="btn-del-row" onclick="removeComboRow('+r.id+')" style="align-self:flex-start">&times;</button>';
+    div.innerHTML=html;container.appendChild(div);
+  });
+  document.getElementById('comboFinalPrice').textContent=formatNum(total)+' 元';
+}
+function autoImportToCombo(){
+  comboRows=[];
+  // 班课
+  var bankeFinal=document.getElementById('bankeFinalPrice');
+  if(bankeFinal&&parseInt(bankeFinal.textContent.replace(/,/g,''))>0){
+    var v=document.getElementById('gradeSelectBanke').value;
+    if(v){
+      comboIdCounter++;
+      comboRows.push({id:comboIdCounter,type:'banke',grade:v,sessions:10,price:BANKE[v].price,
+        finalPrice:parseInt(bankeFinal.textContent.replace(/,/g,'')),
+        processHtml:document.getElementById('bankeProcess').innerHTML
+      });
+    }
+  }
+  // 一对一（仅当年级已选才导入）
+  var grade11=document.getElementById('gradeSelect11').value;
+  var final11=document.getElementById('finalPrice11');
+  if(grade11&&final11&&parseInt(final11.textContent.replace(/,/g,''))>0){
+    comboIdCounter++;
+    comboRows.push({id:comboIdCounter,type:'11',grade:grade11,
+      hours:parseInt(document.getElementById('hours11').value)||30,
+      price:parseInt(document.getElementById('price11').value)||130,
+      serviceFee:parseInt(document.getElementById('serviceFee11').value)||500,
+      discounts:JSON.parse(JSON.stringify(discounts11)),
+      gift:parseInt(document.getElementById('gift11').value)||0,
+      processHtml:document.getElementById('process11').innerHTML
+    });
+  }
+  // 一对二（仅当年级已选才导入）
+  var grade12=document.getElementById('gradeSelect12').value;
+  var final12=document.getElementById('finalPrice12');
+  if(grade12&&final12&&parseInt(final12.textContent.replace(/,/g,''))>0){
+    comboIdCounter++;
+    comboRows.push({id:comboIdCounter,type:'12',grade:grade12,
+      hours:parseInt(document.getElementById('hours12').value)||30,
+      price:parseInt(document.getElementById('price12').value)||120,
+      serviceFee:parseInt(document.getElementById('serviceFee12').value)||500,
+      discounts:JSON.parse(JSON.stringify(discounts12)),
+      gift:parseInt(document.getElementById('gift12').value)||0,
+      processHtml:document.getElementById('process12').innerHTML
+    });
+  }
+  // 一对三（仅当年级已选才导入）
+  var grade13=document.getElementById('gradeSelect13').value;
+  var final13=document.getElementById('finalPrice13');
+  if(grade13&&final13&&parseInt(final13.textContent.replace(/,/g,''))>0){
+    comboIdCounter++;
+    comboRows.push({id:comboIdCounter,type:'13',grade:grade13,
+      hours:parseInt(document.getElementById('hours13').value)||30,
+      price:parseInt(document.getElementById('price13').value)||100,
+      serviceFee:parseInt(document.getElementById('serviceFee13').value)||500,
+      discounts:JSON.parse(JSON.stringify(discounts13)),
+      gift:parseInt(document.getElementById('gift13').value)||0,
+      processHtml:document.getElementById('process13').innerHTML
+    });
+  }
+  renderComboRows();
+}
+function copyComboResult(){
+  var txt='【组合报价】\n';
+  var typeNames={'banke':'班课','11':'一对一','12':'一对二','13':'一对三'};
+  comboRows.forEach(function(r,i){
+    var finalPrice=0;
+    if(r.type==='banke'){finalPrice=r.finalPrice||0;}
+    else{
+      var courseFee=(r.hours||0)*(r.price||0);
+      var sFee=(r.serviceFee||0);
+      var discFixed=0,discPct=0;
+      if(r.discounts){r.discounts.forEach(function(d){if(!d.amount)return;if(d.type==='discount')discPct+=Math.round(courseFee*(100-d.amount)/100);else discFixed+=d.amount||0;});}
+      finalPrice=Math.max(0,courseFee+sFee-discPct-discFixed);
+    }
+    txt+=(i+1)+'. '+typeNames[r.type]+'：'+formatNum(finalPrice)+'元\n';
+  });
+  txt+='\n合计：'+document.getElementById('comboFinalPrice').textContent;
+  var sourceType=document.getElementById('comboSourceType').value;
+  var sourceDetail=document.getElementById('comboSourceDetail').value;
+  if(sourceType)txt+='\n来源：'+sourceType+' '+sourceDetail;
+  navigator.clipboard.writeText(txt).then(function(){alert('已复制！')}).catch(function(){alert(txt)});
+}
+function resetCombo(){
+  if(!confirm('确定清空全部？'))return;
+  comboRows=[];renderComboRows();
+  document.getElementById('comboSourceType').value='';
+  document.getElementById('comboSourceDetail').value='';
+}
+
+// ========== 初始化 ==========
+window.onload=function(){
+  renderBankeGlobalDiscs();
+  renderBankeMaterialItems();
+  renderDisc11();
+  renderDisc12();
+  renderDisc13();
+  calcBanke();
+  calc11();
+  calc12();
+  calc13();
+};
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
